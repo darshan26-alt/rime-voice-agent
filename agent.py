@@ -205,7 +205,11 @@ async def entrypoint(ctx: agents.JobContext):
     # =========================================
     # SESSION
     # =========================================
-
+# =========================================
+# SESSION
+# =========================================
+    await ctx.connect()
+    print("[LIVEKIT] Connected to room")
     session = AgentSession(
 
         # -----------------------------------------

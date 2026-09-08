@@ -2,6 +2,10 @@ import asyncio
 import time
 import os
 
+import sys
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+
 from dotenv import load_dotenv
 load_dotenv(".env.local")
 
@@ -59,12 +63,17 @@ class RimeVoiceAgent(Agent):
         print(f"[TASK] Started task #{task_id}")
 
         try:
+
+            # Simulate a long-running operation
             await asyncio.sleep(30)
 
+            # Ignore stale task results
             if task_id != self.task_id:
+
                 print(
                     f"[TASK] Task #{task_id} is stale - ignoring result"
                 )
+
                 return
 
             self.task_status = "completed"
@@ -133,8 +142,10 @@ class RimeVoiceAgent(Agent):
 
             self.task_status = "cancelled"
 
+            # Invalidate the current task
             self.task_id += 1
 
+            # Cancel asyncio task
             self.current_task.cancel()
 
             self.current_task = None
@@ -166,8 +177,10 @@ class RimeVoiceAgent(Agent):
 
             self.task_status = "cancelled"
 
+            # Invalidate stale result
             self.task_id += 1
 
+            # Cancel background task
             self.current_task.cancel()
 
             self.current_task = None
@@ -195,10 +208,18 @@ async def entrypoint(ctx: agents.JobContext):
 
     session = AgentSession(
 
+        # -----------------------------------------
+        # DEEPGRAM STT
+        # -----------------------------------------
+
         stt=deepgram.STT(
             model="nova-3",
             language="multi",
         ),
+
+        # -----------------------------------------
+        # GROQ LLM
+        # -----------------------------------------
 
         llm=groq.LLM(
             model="openai/gpt-oss-20b",
@@ -207,6 +228,10 @@ async def entrypoint(ctx: agents.JobContext):
             tool_choice="auto",
         ),
 
+        # -----------------------------------------
+        # RIME TTS
+        # -----------------------------------------
+
         tts=rime.TTS(
             model="coda",
             speaker="astra",
@@ -214,6 +239,10 @@ async def entrypoint(ctx: agents.JobContext):
             sample_rate=24000,
             use_websocket=True,
         ),
+
+        # -----------------------------------------
+        # INTERRUPTION SETTINGS
+        # -----------------------------------------
 
         turn_handling={
             "interruption": {
@@ -240,6 +269,16 @@ async def entrypoint(ctx: agents.JobContext):
 
 
     # =========================================
+    # INITIAL MESSAGE
+    # =========================================
+
+    await session.say(
+        "Voice transcription is enabled.",
+        allow_interruptions=True,
+    )
+
+
+    # =========================================
     # OVERLAPPING SPEECH
     # =========================================
 
@@ -257,8 +296,10 @@ async def entrypoint(ctx: agents.JobContext):
                 "[INTERRUPTION] STOPPING RIME SPEECH"
             )
 
+            # Stop current Rime audio
             session.interrupt(force=True)
 
+            # Cancel any running task
             agent.mark_interruption()
 
 
@@ -274,9 +315,9 @@ async def entrypoint(ctx: agents.JobContext):
         )
 
 
-        # -----------------------------------------
+        # =====================================
         # FINAL TRANSCRIPT
-        # -----------------------------------------
+        # =====================================
 
         if event.is_final:
 
@@ -285,9 +326,9 @@ async def entrypoint(ctx: agents.JobContext):
             )
 
 
-        # -----------------------------------------
+        # =====================================
         # PARTIAL TRANSCRIPT
-        # -----------------------------------------
+        # =====================================
 
         if not event.is_final:
 
@@ -302,8 +343,10 @@ async def entrypoint(ctx: agents.JobContext):
                     time.perf_counter()
                 )
 
+                # Immediately stop Rime speech
                 session.interrupt(force=True)
 
+                # Cancel/invalidate running task
                 agent.mark_interruption()
 
                 stop_time = (
@@ -318,9 +361,9 @@ async def entrypoint(ctx: agents.JobContext):
             return
 
 
-        # -----------------------------------------
+        # =====================================
         # FINAL USER TEXT
-        # -----------------------------------------
+        # =====================================
 
         text = event.transcript.lower().strip()
 
@@ -329,9 +372,9 @@ async def entrypoint(ctx: agents.JobContext):
         )
 
 
-        # -----------------------------------------
-        # OLD PROCESSING METRIC
-        # -----------------------------------------
+        # =====================================
+        # PROCESSING LATENCY
+        # =====================================
 
         if agent.last_user_finished:
 
@@ -341,9 +384,9 @@ async def entrypoint(ctx: agents.JobContext):
             )
 
 
-        # -----------------------------------------
+        # =====================================
         # CANCEL ACTIVE TASK
-        # -----------------------------------------
+        # =====================================
 
         if (
             agent.current_task
@@ -358,9 +401,9 @@ async def entrypoint(ctx: agents.JobContext):
             agent.cancel_current_task()
 
 
-        # -----------------------------------------
+        # =====================================
         # START TASK COMMAND
-        # -----------------------------------------
+        # =====================================
 
         if (
             "long task" in text
@@ -375,9 +418,9 @@ async def entrypoint(ctx: agents.JobContext):
             agent.start_task()
 
 
-        # -----------------------------------------
+        # =====================================
         # STOP TASK COMMAND
-        # -----------------------------------------
+        # =====================================
 
         elif (
             text.startswith("stop")

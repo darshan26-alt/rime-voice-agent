@@ -1,3 +1,14 @@
+# 🎙️ Rime Voice Task Agent
+
+> A voice-native task agent built with Rime TTS, Deepgram STT, Groq, and LiveKit — designed for **instant interruption and recovery** during ongoing voice tasks.
+
+**Hackathon:** Rime Hackathon — DataForge × Rime
+
+### Core Voice Challenge
+
+**Interruption & Recovery**
+
+The user can interrupt the agent while it is speaking. The agent immediately stops the current Rime speech, cancels or invalidates the ongoing task, and processes the user's new instruction without continuing stale output.
 # Rime Voice Agent — Voice Engineering Evidence
 
 ## 1. Hard Voice Problem

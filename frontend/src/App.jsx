@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const TOKEN_URL =
-  "http://localhost:8000/get-token?room=rime-demo-room";
+  "https://rime-voice-agent-l8wv.onrender.com/get-token?room=rime-demo-room";
 
 
 function VoiceDashboard() {

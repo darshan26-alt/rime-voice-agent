@@ -147,13 +147,6 @@ class TokenHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-
-    print(
-        "🔐 LiveKit token server running "
-        "on http://localhost:8000"
-    )
-
-    HTTPServer(
-        ("localhost", 8000),
-        TokenHandler
-    ).serve_forever()
+    PORT = int(os.getenv("PORT", "8000"))
+    print(f"🔐 LiveKit token server running on port {PORT}")
+    HTTPServer(("0.0.0.0", PORT), TokenHandler).serve_forever()
